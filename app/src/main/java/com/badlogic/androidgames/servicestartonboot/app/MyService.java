@@ -38,32 +38,37 @@ public class MyService extends Service {
                 public void handleMessage(Message msg) {
                     String aResponse = msg.getData().getString("message");
                     if ((aResponse != null)) {
-                        Toast.makeText( getBaseContext(), aResponse, Toast.LENGTH_SHORT).show();
+                        Log.i(TAG, "Response receieved, " + aResponse);
+                        Toast.makeText(getApplicationContext(), aResponse, Toast.LENGTH_LONG).show();
                     }
                 }
             };
 
             // After call for background.start this run method call
             public void run() {
-                Looper.prepare();
-                Toast.makeText( getBaseContext(), "Contacting server...", Toast.LENGTH_SHORT).show();
                 try {
+                    Log.i(TAG, "In run(), sleeping for 10 seconds...");
+                    Thread.sleep(10000);
+
+                    Log.i(TAG, "Awake again");
+                    postMessageToUI("Contacting server...");
+
                     HttpGet httpget = new HttpGet(URL);
                     String serverResponse = Client.execute(httpget, new BasicResponseHandler());
-                    processServerResponse(serverResponse);
+                    if (!serverResponse.equals(null) && !serverResponse.equals(""))
+                        postMessageToUI(serverResponse);
+
                 } catch (Throwable t) {
                     Log.i(TAG, "Thread  exception " + t);
                 }
             }
 
-            private void processServerResponse(String serverResponse) {
-                if (!serverResponse.equals(null) && !serverResponse.equals("")) {
-                    Message msgObj = handler.obtainMessage();
-                    Bundle bundle = new Bundle();
-                    bundle.putString("message", serverResponse);
-                    msgObj.setData(bundle);
-                    handler.sendMessage(msgObj);
-                }
+            private void postMessageToUI(String message) {
+                Message msgObj = handler.obtainMessage();
+                Bundle bundle = new Bundle();
+                bundle.putString("message", message);
+                msgObj.setData(bundle);
+                handler.sendMessage(msgObj);
             }
         });
         background.start();   // Start Thread
